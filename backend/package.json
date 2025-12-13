@@ -4,8 +4,8 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon server.js",
-    "start": "npx prisma migrate deploy && node server.js",
-    "build": "prisma generate",
+    "start": "node server.js",
+    "build": "prisma generate && prisma db push",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
