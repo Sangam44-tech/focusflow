@@ -1,233 +1,188 @@
-# FocusFlow - Project Management & Productivity App
+# 🎯 FocusFlow
 
-A modern project management application with AI-powered planning capabilities.
+> AI-Powered Goal & Task Tracker SaaS
 
-## Features
+[![CI/CD](https://github.com/Sangam44-tech/focusflow/actions/workflows/deploy.yml/badge.svg)](https://github.com/Sangam44-tech/focusflow/actions)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-- 🚀 **Project Management**: Create and organize projects with tasks
-- 🤖 **AI Planner**: Generate project plans using AI
-- 📊 **Analytics**: Track productivity and progress
-- 🎯 **Task Management**: Kanban-style task boards
-- 🔐 **Authentication**: Secure user authentication
-- 📱 **Responsive Design**: Works on all devices
+## 📖 Overview
 
-## Tech Stack
+FocusFlow is a modern, full-stack productivity application that combines traditional task management with AI-powered planning capabilities. Transform vague goals into actionable, structured task plans.
 
-### Frontend
-- React 18 with Vite
-- Tailwind CSS for styling
-- React Router for navigation
-- React Hook Form with Zod validation
-- Axios for API calls
-- React Hot Toast for notifications
+### ✨ Key Features
+
+- 🤖 **AI Planning** - Generate structured task plans from goals using Google Gemini
+- 📁 **Project Management** - Organize tasks into projects with deadlines
+- 📊 **Analytics Dashboard** - Track progress with charts and streaks
+- 🎯 **Task Management** - Kanban-style boards with priority levels
+- 🔐 **Secure Auth** - JWT-based authentication with refresh tokens
+- 📱 **Responsive Design** - Works seamlessly on all devices
+
+## 🛠️ Tech Stack
 
 ### Backend
-- Node.js with Express
-- Prisma ORM with PostgreSQL
-- JWT authentication
-- Zod validation
-- Rate limiting and security middleware
-- Google Gemini AI integration
+- Node.js + Express
+- PostgreSQL + Prisma ORM
+- JWT Authentication
+- Google Gemini AI
+- Rate limiting & Security
 
-## Quick Start
+### Frontend
+- React 18 + Vite
+- Tailwind CSS
+- React Router v6
+- React Hook Form + Zod
+- Axios + React Hot Toast
+
+## 🚀 Quick Start
 
 ### Prerequisites
-- Node.js 18+ 
-- npm or yarn
-- PostgreSQL database
-- Database named 'focusflow_db'
+- Node.js 18+
+- PostgreSQL
+- Google Gemini API Key
 
 ### Installation
 
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd focusflow
-   ```
+```bash
+# Clone repository
+git clone https://github.com/Sangam44-tech/focusflow.git
+cd focusflow
 
-2. **Setup Database**
-   - Make sure PostgreSQL is running
-   - Create database: `CREATE DATABASE focusflow_db;`
-   - Or run: `psql -U postgres -c "CREATE DATABASE focusflow_db;"`
+# Backend setup
+cd backend
+npm install
+cp .env.example .env
+# Edit .env with your credentials
+npx prisma generate
+npx prisma db push
+npm run dev
 
-3. **Run setup script (Windows)**
-   ```bash
-   setup.bat
-   ```
-
-4. **Or manual setup:**
-
-   **Backend Setup:**
-   ```bash
-   cd backend
-   npm install
-   npx prisma generate
-   npx prisma db push
-   ```
-
-   **Frontend Setup:**
-   ```bash
-   cd frontend
-   npm install
-   ```
-
-### Running the Application
-
-1. **Start Backend** (Terminal 1):
-   ```bash
-   cd backend
-   npm run dev
-   ```
-   Backend will run on http://localhost:5000
-
-2. **Start Frontend** (Terminal 2):
-   ```bash
-   cd frontend
-   npm run dev
-   ```
-   Frontend will run on http://localhost:3000
-
-## Environment Variables
-
-### Backend (.env)
-```env
-NODE_ENV=development
-PORT=5000
-DATABASE_URL="postgresql://postgres:your-password@localhost:5432/focusflow_db"
-ACCESS_TOKEN_SECRET=your-access-token-secret
-REFRESH_TOKEN_SECRET=your-refresh-token-secret
-FRONTEND_URL=http://localhost:3000
-GEMINI_API_KEY=your-gemini-api-key
-OPENAI_API_KEY=your-openai-key (optional)
+# Frontend setup (new terminal)
+cd frontend
+npm install
+cp .env.example .env
+npm run dev
 ```
 
-### Frontend (.env)
+### Environment Variables
+
+**Backend (.env)**
 ```env
-VITE_API_URL=http://localhost:5000/api
+DATABASE_URL="postgresql://postgres:password@localhost:5432/focusflow_db"
+ACCESS_TOKEN_SECRET="your-access-token-secret"
+REFRESH_TOKEN_SECRET="your-refresh-token-secret"
+GEMINI_API_KEY="your-gemini-api-key"
+FRONTEND_URL="http://localhost:3000"
 ```
 
-## Project Structure
+**Frontend (.env)**
+```env
+VITE_API_URL="http://localhost:5000/api"
+```
+
+## 📁 Project Structure
 
 ```
 focusflow/
 ├── backend/
-│   ├── prisma/
-│   │   └── schema.prisma
 │   ├── src/
-│   │   ├── controllers/
-│   │   ├── services/
-│   │   ├── routes/
-│   │   ├── middlewares/
 │   │   ├── config/
-│   │   └── utils/
-│   └── package.json
+│   │   ├── controllers/
+│   │   ├── middlewares/
+│   │   ├── repositories/
+│   │   ├── routes/
+│   │   ├── services/
+│   │   ├── utils/
+│   │   └── validations/
+│   ├── prisma/
+│   └── tests/
 ├── frontend/
 │   ├── src/
 │   │   ├── components/
+│   │   ├── features/
 │   │   ├── pages/
 │   │   ├── context/
-│   │   ├── services/
-│   │   └── utils/
-│   └── package.json
-└── README.md
+│   │   └── services/
+│   └── public/
+└── docs/
 ```
 
-## API Endpoints
+## 🔌 API Endpoints
 
 ### Authentication
-- `POST /api/auth/register` - Register user
-- `POST /api/auth/login` - Login user
-- `GET /api/auth/me` - Get current user
-- `POST /api/auth/logout` - Logout user
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/auth/register` | Register new user |
+| POST | `/api/auth/login` | Login user |
+| POST | `/api/auth/refresh` | Refresh token |
+| POST | `/api/auth/logout` | Logout user |
 
 ### Projects
-- `GET /api/projects` - Get all projects
-- `POST /api/projects` - Create project
-- `GET /api/projects/:id` - Get project by ID
-- `PUT /api/projects/:id` - Update project
-- `DELETE /api/projects/:id` - Delete project
-
-### Tasks
-- `GET /api/projects/:id/tasks` - Get project tasks
-- `POST /api/projects/:id/tasks` - Create task
-- `PATCH /api/tasks/:id/status` - Update task status
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/projects` | Get all projects |
+| POST | `/api/projects` | Create project |
+| GET | `/api/projects/:id` | Get project |
+| PUT | `/api/projects/:id` | Update project |
+| DELETE | `/api/projects/:id` | Delete project |
 
 ### AI Planner
-- `POST /api/ai/generate` - Generate AI plan
-- `POST /api/ai/import` - Import plan as project
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/ai/generate` | Generate AI plan |
+| GET | `/api/ai/plans` | Get user plans |
+| POST | `/api/ai/import` | Import plan as project |
 
-## Features Overview
+## 🧪 Testing
 
-### Dashboard
-- Project overview and statistics
-- Recent projects and tasks
-- Quick actions and productivity insights
-
-### Project Management
-- Create and organize projects
-- Color-coded project cards
-- Project statistics and progress tracking
-
-### Task Management
-- Kanban-style task boards
-- Drag-and-drop functionality (planned)
-- Priority levels and status tracking
-
-### AI Planner
-- Natural language goal input
-- AI-generated task breakdowns
-- One-click project import
-
-### Analytics
-- Productivity metrics
-- Progress tracking
-- Weekly reports and insights
-
-## Development
-
-### Database Schema
-The app uses Prisma with PostgreSQL. Key models:
-- User (authentication and profile)
-- Project (project management)
-- Task (task tracking)
-- AIPlan (AI-generated plans)
-
-### Authentication
-- JWT-based authentication
-- Access and refresh tokens
-- Protected routes and middleware
-
-### Styling
-- Tailwind CSS for utility-first styling
-- Custom color palette with primary brand colors
-- Responsive design patterns
-
-## Deployment
-
-FocusFlow can be deployed using several methods:
-
-### Quick Deploy
 ```bash
-# Windows
-deploy.bat
+# Backend tests
+cd backend
+npm test
 
-# Unix/Linux/macOS
-./deploy.sh
+# Run with coverage
+npm run test:coverage
+
+# Watch mode
+npm run test:watch
 ```
 
-### Recommended: Render + Vercel
-- **Backend**: Deploy to Render using `render.yaml`
-- **Frontend**: Deploy to Vercel using `vercel.json`
-- **Database**: Use Neon or Supabase PostgreSQL
+## 🚢 Deployment
 
-### Other Options
-- Docker deployment with `Dockerfile`
-- Manual deployment to any Node.js hosting
-- Self-hosted with PM2 or similar
+### Backend (Render)
+1. Connect GitHub repository
+2. Set environment variables
+3. Deploy using `render.yaml`
 
-See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed deployment instructions.
+### Frontend (Vercel)
+1. Import project from GitHub
+2. Set `VITE_API_URL` environment variable
+3. Deploy using `vercel.json`
 
-## Contributing
+### Database
+- **Development**: Local PostgreSQL
+- **Production**: Neon, Supabase, or Render PostgreSQL
+
+## 🐳 Docker
+
+```bash
+# Run with Docker Compose
+docker-compose up
+
+# Build individual services
+docker build -t focusflow-backend ./backend
+docker build -t focusflow-frontend ./frontend
+```
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE)
+
+## 👤 Author
+
+**Sangam** - [@Sangam44-tech](https://github.com/Sangam44-tech)
+
+## 🤝 Contributing
 
 1. Fork the repository
 2. Create a feature branch
@@ -235,10 +190,9 @@ See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed deployment instructions.
 4. Test thoroughly
 5. Submit a pull request
 
-## License
+## ⭐ Star this repo if you found it helpful!
 
-This project is licensed under the MIT License.
+---
 
-## Support
-
-For support or questions, please open an issue in the repository.
+**Live Demo**: [Coming Soon]
+**Documentation**: [API Docs](docs/api.md)

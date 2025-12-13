@@ -6,7 +6,9 @@
     "dev": "nodemon server.js",
     "start": "node server.js",
     "build": "prisma generate",
-    "test": "echo \"No tests specified\" && exit 0",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "lint": "echo \"No linting configured\" && exit 0",
     "validate": "node ../validate-setup.js",
     "db:generate": "prisma generate",
@@ -37,7 +39,10 @@
   },
   "devDependencies": {
     "nodemon": "^3.1.11",
-    "prisma": "^5.22.0"
+    "prisma": "^5.22.0",
+    "vitest": "^1.0.0",
+    "supertest": "^6.3.0",
+    "@vitest/coverage-v8": "^1.0.0"
   },
   "description": "",
   "main": "server.js",
