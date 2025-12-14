@@ -4,7 +4,7 @@ import { analyticsRepository } from '../repositories/analytics.repository.js';
 
 // Simple in-memory cache
 const cache = new Map();
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const CACHE_TTL = 30 * 1000; // 30 seconds
 
 const analyticsCache = {
   get: (key) => {
@@ -54,8 +54,27 @@ export const analyticsService = {
     const todoTasks = tasks.find(t => t.status === 'TODO')?._count || 0;
     const totalTasks = tasks.reduce((sum, t) => sum + t._count, 0);
 
+    // Calculate active projects (projects with status ACTIVE)
+    const activeProjects = await prisma.project.count({ 
+      where: { 
+        userId,
+        status: 'ACTIVE'
+      } 
+    });
+
+    // Calculate completed projects
+    const completedProjects = await prisma.project.count({ 
+      where: { 
+        userId,
+        status: 'COMPLETED'
+      } 
+    });
+
     const result = {
       totalProjects: projects,
+      totalGoals: projects, // Alias for frontend compatibility
+      activeProjects,
+      completedProjects,
       totalTasks,
       completedTasks,
       activeTasks,

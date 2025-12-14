@@ -63,7 +63,7 @@ Create 5-8 actionable tasks. For estimatedDays: HIGH priority = 7-14 days, MEDIU
       // Extract JSON from response
       let jsonMatch = text.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
-        throw new Error('No JSON found in response');
+        throw new ApiError(500, 'AI response did not contain a valid JSON object.');
       }
       
       const rawResponse = JSON.parse(jsonMatch[0]);

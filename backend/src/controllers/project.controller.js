@@ -2,6 +2,7 @@
 // backend/src/controllers/project.controller.js
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { projectService } from '../services/project.service.js';
+import { analyticsService } from '../services/analytics.service.js';
 
 export const createProject = asyncHandler(async (req, res) => {
   console.log('Creating project:', {
@@ -17,6 +18,9 @@ export const createProject = asyncHandler(async (req, res) => {
   );
   
   console.log('Project created:', project);
+  
+  // Invalidate analytics cache for real-time updates
+  analyticsService.invalidateUserCache(req.user.id);
   
   res.status(201).json({
     success: true,
@@ -50,6 +54,9 @@ export const updateProject = asyncHandler(async (req, res) => {
     req.body
   );
   
+  // Invalidate analytics cache for real-time updates
+  analyticsService.invalidateUserCache(req.user.id);
+  
   res.json({
     success: true,
     message: 'Project updated successfully',
@@ -59,6 +66,9 @@ export const updateProject = asyncHandler(async (req, res) => {
 
 export const deleteProject = asyncHandler(async (req, res) => {
   await projectService.delete(req.params.id, req.user.id);
+  
+  // Invalidate analytics cache for real-time updates
+  analyticsService.invalidateUserCache(req.user.id);
   
   res.json({
     success: true,
@@ -82,6 +92,9 @@ export const updateProjectStatus = asyncHandler(async (req, res) => {
     req.user.id,
     status
   );
+  
+  // Invalidate analytics cache for real-time updates
+  analyticsService.invalidateUserCache(req.user.id);
   
   res.json({
     success: true,

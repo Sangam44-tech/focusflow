@@ -13,9 +13,11 @@ datasource db {
 model User {
   id            String    @id @default(cuid())
   email         String    @unique
-  password      String
+  password      String?
   name          String?
   avatar        String?
+  provider      String?   // 'google', 'email', etc.
+  providerId    String?   // Google user ID
   tokenVersion  Int       @default(0)  // For token invalidation
   
   createdAt     DateTime  @default(now())
