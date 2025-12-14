@@ -116,10 +116,19 @@ export const ProjectDetail = () => {
     setEditingTask(null);
   };
 
-  const handleStatusChange = async (taskId, newStatus) => {
+  const handleStatusChange = async (taskId, newStatus, retryCount = 0) => {
     try {
       console.log('Updating task status:', { taskId, newStatus });
-      const response = await api.patch(`/tasks/${taskId}/status`, { status: newStatus });
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
+      
+      const response = await api.patch(`/tasks/${taskId}/status`, 
+        { status: newStatus },
+        { signal: controller.signal }
+      );
+      
+      clearTimeout(timeoutId);
       
       if (response.data.success) {
         toast.success('Task status updated!');
@@ -132,20 +141,36 @@ export const ProjectDetail = () => {
       }
     } catch (error) {
       console.error('Task status update error:', error);
-      toast.error(error.response?.data?.message || 'Failed to update task status');
+      
+      // Retry on network errors
+      if ((error.code === 'NETWORK_ERROR' || error.name === 'AbortError') && retryCount < 2) {
+        setTimeout(() => handleStatusChange(taskId, newStatus, retryCount + 1), 1000);
+        return;
+      }
+      
+      toast.error(error.response?.data?.message || 'Failed to update task status. Check your connection.');
     }
   };
 
   const [statusLoading, setStatusLoading] = useState(false);
 
-  const handleProjectStatusChange = async (newStatus) => {
+  const handleProjectStatusChange = async (newStatus, retryCount = 0) => {
     if (statusLoading) return;
     
     setStatusLoading(true);
     try {
       console.log('Updating project status from', project.status, 'to:', newStatus);
       
-      const response = await api.patch(`/projects/${id}/status`, { status: newStatus });
+      // Add timeout to the request
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+      
+      const response = await api.patch(`/projects/${id}/status`, 
+        { status: newStatus },
+        { signal: controller.signal }
+      );
+      
+      clearTimeout(timeoutId);
       console.log('Status update response:', response.data);
       
       if (response.data.success) {
@@ -164,9 +189,18 @@ export const ProjectDetail = () => {
       console.error('Status update error:', {
         error: error.message,
         response: error.response?.data,
-        status: error.response?.status
+        status: error.response?.status,
+        retryCount
       });
-      toast.error(error.response?.data?.message || error.message || 'Failed to update project status');
+      
+      // Retry on network errors
+      if ((error.code === 'NETWORK_ERROR' || error.name === 'AbortError') && retryCount < 2) {
+        toast.error(`Network error, retrying... (${retryCount + 1}/3)`);
+        setTimeout(() => handleProjectStatusChange(newStatus, retryCount + 1), 1000);
+        return;
+      }
+      
+      toast.error(error.response?.data?.message || error.message || 'Failed to update project status. Check your connection.');
     } finally {
       setStatusLoading(false);
     }
@@ -470,27 +504,35 @@ export const ProjectDetail = () => {
                         <div className="flex items-center justify-between">
                           <div className="flex gap-1">
                             {[
-                              { value: 'TODO', label: 'To Do', emoji: '📝', color: 'gray' },
-                              { value: 'IN_PROGRESS', label: 'Progress', emoji: '🔄', color: 'blue' },
-                              { value: 'COMPLETED', label: 'Done', emoji: '✅', color: 'green' }
-                            ].map((status) => (
-                              <button
-                                key={status.value}
-                                onClick={() => handleStatusChange(task.id, status.value)}
-                                disabled={task.status === status.value}
-                                className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium transition-all ${
-                                  task.status === status.value
-                                    ? status.color === 'gray' ? 'bg-gray-200 text-gray-800 cursor-default'
-                                      : status.color === 'blue' ? 'bg-blue-200 text-blue-800 cursor-default'
-                                      : 'bg-green-200 text-green-800 cursor-default'
-                                    : 'bg-gray-50 text-gray-600 hover:bg-gray-100 hover:scale-105'
-                                }`}
-                                title={task.status === status.value ? `Currently ${status.label}` : `Move to ${status.label}`}
-                              >
-                                <span>{status.emoji}</span>
-                                <span className="hidden sm:inline">{status.label}</span>
-                              </button>
-                            ))}
+                              { value: 'TODO', label: 'To Do', emoji: '📝' },
+                              { value: 'IN_PROGRESS', label: 'Progress', emoji: '🔄' },
+                              { value: 'COMPLETED', label: 'Done', emoji: '✅' }
+                            ].map((status) => {
+                              const isActive = task.status === status.value;
+                              return (
+                                <button
+                                  key={status.value}
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    if (!isActive) {
+                                      handleStatusChange(task.id, status.value);
+                                    }
+                                  }}
+                                  className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium transition-all ${
+                                    isActive
+                                      ? status.value === 'TODO' ? 'bg-slate-200 text-slate-800 ring-2 ring-slate-400'
+                                        : status.value === 'IN_PROGRESS' ? 'bg-blue-200 text-blue-800 ring-2 ring-blue-400'
+                                        : 'bg-green-200 text-green-800 ring-2 ring-green-400'
+                                      : 'bg-gray-50 text-gray-600 hover:bg-gray-100 hover:scale-105 cursor-pointer'
+                                  }`}
+                                  title={isActive ? `Currently ${status.label}` : `Move to ${status.label}`}
+                                >
+                                  <span>{status.emoji}</span>
+                                  <span className="hidden sm:inline">{status.label}</span>
+                                </button>
+                              );
+                            })}
                           </div>
                           <div className="flex gap-1">
                             <button

@@ -31,6 +31,13 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
     
+    // Handle network errors
+    if (!error.response) {
+      error.code = 'NETWORK_ERROR';
+      console.error('Network error:', error.message);
+      return Promise.reject(error);
+    }
+    
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
       
