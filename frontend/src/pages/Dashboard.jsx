@@ -43,6 +43,7 @@ export const Dashboard = () => {
         api.get('/projects')
       ]);
       
+      console.log('Dashboard Analytics Data:', analyticsRes.data.data);
       setAnalytics(analyticsRes.data.data);
       setRecentProjects(projectsRes.data.data?.slice(0, 4) || []);
     } catch (error) {
@@ -141,7 +142,7 @@ export const Dashboard = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs lg:text-sm font-medium text-gray-600">Active Goals</p>
-              <p className="text-2xl lg:text-3xl font-bold text-gray-900">{analytics?.activeProjects || 0}</p>
+              <p className="text-2xl lg:text-3xl font-bold text-blue-600">{analytics?.activeProjects || 0}</p>
             </div>
             <div className="w-10 h-10 lg:w-12 lg:h-12 bg-blue-100 rounded-lg lg:rounded-xl flex items-center justify-center flex-shrink-0">
               <svg className="w-5 h-5 lg:w-6 lg:h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -154,8 +155,8 @@ export const Dashboard = () => {
         <div className="bg-white rounded-xl lg:rounded-2xl p-4 lg:p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs lg:text-sm font-medium text-gray-600">Completed</p>
-              <p className="text-2xl lg:text-3xl font-bold text-gray-900">{analytics?.completedProjects || 0}</p>
+              <p className="text-xs lg:text-sm font-medium text-gray-600">Completed Goals</p>
+              <p className="text-2xl lg:text-3xl font-bold text-emerald-600">{analytics?.completedProjects || 0}</p>
             </div>
             <div className="w-10 h-10 lg:w-12 lg:h-12 bg-green-100 rounded-lg lg:rounded-xl flex items-center justify-center flex-shrink-0">
               <svg className="w-5 h-5 lg:w-6 lg:h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -169,7 +170,7 @@ export const Dashboard = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs lg:text-sm font-medium text-gray-600">Total Tasks</p>
-              <p className="text-2xl lg:text-3xl font-bold text-gray-900">{analytics?.totalTasks || 0}</p>
+              <p className="text-2xl lg:text-3xl font-bold text-purple-600">{analytics?.totalTasks || 0}</p>
             </div>
             <div className="w-10 h-10 lg:w-12 lg:h-12 bg-purple-100 rounded-lg lg:rounded-xl flex items-center justify-center flex-shrink-0">
               <svg className="w-5 h-5 lg:w-6 lg:h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -183,10 +184,8 @@ export const Dashboard = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs lg:text-sm font-medium text-gray-600">Completion Rate</p>
-              <p className="text-2xl lg:text-3xl font-bold text-gray-900">
-                {analytics?.totalTasks > 0 
-                  ? Math.round((analytics.completedTasks / analytics.totalTasks) * 100)
-                  : 0}%
+              <p className="text-2xl lg:text-3xl font-bold text-orange-600">
+                {analytics?.completionRate || 0}%
               </p>
             </div>
             <div className="w-10 h-10 lg:w-12 lg:h-12 bg-orange-100 rounded-lg lg:rounded-xl flex items-center justify-center flex-shrink-0">

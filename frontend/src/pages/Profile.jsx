@@ -28,6 +28,17 @@ export const Profile = () => {
       });
     }
     fetchStats();
+    
+    // Listen for analytics refresh events
+    const handleAnalyticsRefresh = () => {
+      fetchStats();
+    };
+    
+    window.addEventListener('analyticsRefresh', handleAnalyticsRefresh);
+    
+    return () => {
+      window.removeEventListener('analyticsRefresh', handleAnalyticsRefresh);
+    };
   }, [user]);
 
   const fetchStats = async () => {
@@ -41,6 +52,7 @@ export const Profile = () => {
       const projects = projectsRes.data.data || [];
       
       if (analytics) {
+        console.log('Profile Analytics Data:', analytics);
         setStats({
           totalProjects: analytics.totalProjects || 0,
           activeProjects: analytics.activeProjects || 0,
@@ -49,6 +61,7 @@ export const Profile = () => {
           completedTasks: analytics.completedTasks || 0,
           completionRate: analytics.completionRate || 0,
           currentStreak: analytics.currentStreak || 0,
+          bestStreak: analytics.bestStreak || 0,
           joinDate: user?.createdAt
         });
       } else {
@@ -316,6 +329,13 @@ export const Profile = () => {
                   <div className="flex items-center justify-between">
                     <span className="text-gray-600">Current Streak</span>
                     <span className="font-semibold text-orange-600">{stats.currentStreak} days 🔥</span>
+                  </div>
+                )}
+                
+                {stats.bestStreak > 0 && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Best Streak</span>
+                    <span className="font-semibold text-purple-600">{stats.bestStreak} days 🏆</span>
                   </div>
                 )}
                 
