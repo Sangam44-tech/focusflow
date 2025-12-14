@@ -27,9 +27,9 @@ export const authLimiter = rateLimit({
 // AI generation rate limiter
 export const aiLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: 10,
+  max: 100, // Increased limit
   message: {
     success: false,
-    message: 'AI generation limit reached. Upgrade to Premium for more.'
+    message: 'AI generation limit reached. Please try again later.'
   },
 });

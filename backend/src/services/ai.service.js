@@ -8,26 +8,8 @@ import prisma from '../config/database.js';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-// Rate limits
-const FREE_PLAN_DAILY_LIMIT = 3;
-const PREMIUM_PLAN_DAILY_LIMIT = 50;
-
 export const aiService = {
   generatePlan: async (userId, input, userPlan) => {
-    // Check rate limits
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    const usageCount = await aiRepository.countByUser(userId, today);
-    const limit = userPlan === 'PREMIUM' ? PREMIUM_PLAN_DAILY_LIMIT : FREE_PLAN_DAILY_LIMIT;
-    
-    if (userPlan === 'FREE' && usageCount >= FREE_PLAN_DAILY_LIMIT) {
-      throw new ApiError(403, 'Daily AI generation limit reached. Upgrade to Premium for more!');
-    }
-    
-    if (usageCount >= limit) {
-      throw new ApiError(429, 'Daily AI generation limit reached. Please try again tomorrow.');
-    }
 
     const goalText = typeof input === 'string' ? input : input.goal;
     const deadline = typeof input === 'object' ? input.deadline : null;
@@ -167,13 +149,7 @@ Create 5-8 actionable tasks. For estimatedDays: HIGH priority = 7-14 days, MEDIU
       throw new ApiError(400, 'This plan has already been imported');
     }
 
-    // Check project limits for free users
-    if (userPlan === 'FREE') {
-      const projectCount = await projectRepository.countByUser(userId);
-      if (projectCount >= 3) {
-        throw new ApiError(403, 'Free plan limited to 3 projects. Upgrade to Premium!');
-      }
-    }
+    // No project limits
 
     const generatedTasks = plan.generatedTasks;
     const name = projectName || generatedTasks.projectName;
