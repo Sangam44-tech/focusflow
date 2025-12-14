@@ -43,8 +43,7 @@ export const GoogleLoginButton = () => {
         try {
           window.google.accounts.id.initialize({
             client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
-            callback: handleCredentialResponse,
-            use_fedcm_for_prompt: false
+            callback: handleCredentialResponse
           });
           setGoogleReady(true);
         } catch (error) {
