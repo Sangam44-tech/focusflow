@@ -6,24 +6,50 @@ export const GoogleLoginButton = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // Load Google Sign-In script
-    const script = document.createElement('script');
-    script.src = 'https://accounts.google.com/gsi/client';
-    script.async = true;
-    script.defer = true;
-    document.head.appendChild(script);
-
-    script.onload = () => {
-      if (window.google) {
+    // Check if script already exists
+    if (document.querySelector('script[src="https://accounts.google.com/gsi/client"]')) {
+      if (window.google?.accounts?.id) {
         window.google.accounts.id.initialize({
           client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
           callback: handleCredentialResponse
         });
       }
+      return;
+    }
+
+    // Load Google Sign-In script
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    
+    script.onload = () => {
+      if (window.google?.accounts?.id) {
+        try {
+          window.google.accounts.id.initialize({
+            client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+            callback: handleCredentialResponse
+          });
+        } catch (error) {
+          console.error('Google initialization failed:', error);
+        }
+      }
     };
+    
+    script.onerror = () => {
+      console.error('Failed to load Google Sign-In script');
+    };
+    
+    document.head.appendChild(script);
 
     return () => {
-      document.head.removeChild(script);
+      try {
+        if (script.parentNode) {
+          document.head.removeChild(script);
+        }
+      } catch (error) {
+        console.error('Error removing Google script:', error);
+      }
     };
   }, []);
 

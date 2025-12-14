@@ -6,9 +6,11 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 // Create axios instance
 const api = axios.create({
   baseURL: API_URL,
+  timeout: 15000, // 15 second timeout
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true,
 });
 
 // Request interceptor to add auth token
@@ -34,7 +36,14 @@ api.interceptors.response.use(
     // Handle network errors
     if (!error.response) {
       error.code = 'NETWORK_ERROR';
-      console.error('Network error:', error.message);
+      console.error('Network error:', {
+        message: error.message,
+        code: error.code,
+        config: {
+          url: error.config?.url,
+          method: error.config?.method
+        }
+      });
       return Promise.reject(error);
     }
     

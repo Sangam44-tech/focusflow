@@ -42,7 +42,6 @@ export const taskRepository = {
   },
   
   update: async (id, data, userId = null) => {
-    const where = { id };
     if (userId) {
       // Verify ownership through project
       const task = await prisma.task.findFirst({
@@ -71,6 +70,10 @@ export const taskRepository = {
       select: { status: true }
     });
     
+    if (!currentTask) {
+      throw new Error('Task not found');
+    }
+    
     const task = await prisma.task.update({
       where: { id },
       data: {
@@ -80,14 +83,19 @@ export const taskRepository = {
     });
     
     // Create task log with previous status
-    await prisma.taskLog.create({
-      data: {
-        taskId: id,
-        action: 'status_change',
-        previousStatus: currentTask?.status,
-        newStatus: status
-      }
-    });
+    try {
+      await prisma.taskLog.create({
+        data: {
+          taskId: id,
+          action: 'status_change',
+          previousStatus: currentTask.status,
+          newStatus: status
+        }
+      });
+    } catch (logError) {
+      console.error('Failed to create task log:', logError);
+      // Don't fail the main operation if logging fails
+    }
     
     return task;
   },
