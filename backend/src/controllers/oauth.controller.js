@@ -33,12 +33,11 @@ export const googleAuth = asyncHandler(async (req, res) => {
     });
 
     if (!user) {
-      const hashedPassword = await bcrypt.hash(googleId, 10);
       user = await prisma.user.create({
         data: {
           email,
           name,
-          password: hashedPassword,
+          password: await bcrypt.hash(googleId, 8),
           avatar: picture,
           provider: 'google',
           providerId: googleId
@@ -56,21 +55,13 @@ export const googleAuth = asyncHandler(async (req, res) => {
       });
     }
 
-    const accessToken = jwt.sign(
-      { userId: user.id },
-      process.env.ACCESS_TOKEN_SECRET,
-      { expiresIn: '15m' }
-    );
-
-    const refreshToken = jwt.sign(
-      { userId: user.id, tokenVersion: user.tokenVersion },
-      process.env.REFRESH_TOKEN_SECRET,
-      { expiresIn: '7d' }
-    );
+    const [accessToken, refreshToken] = await Promise.all([
+      jwt.sign({ userId: user.id }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '15m' }),
+      jwt.sign({ userId: user.id, tokenVersion: user.tokenVersion }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '7d' })
+    ]);
 
     res.json({
       success: true,
-      message: 'Google login successful',
       data: {
         user: {
           id: user.id,
@@ -84,7 +75,6 @@ export const googleAuth = asyncHandler(async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Google OAuth error:', error);
     throw new ApiError(401, 'Invalid Google token');
   }
 });

@@ -9,83 +9,55 @@ export const GoogleLoginButton = () => {
   const navigate = useNavigate();
 
   const handleCredentialResponse = async (response) => {
-    console.log('Google credential response:', response);
     setLoading(true);
     
-    // Use API URL from environment variables
     const apiUrl = import.meta.env.VITE_API_URL;
-    
     if (!apiUrl) {
-      toast.error('API configuration missing. Please contact support.');
+      toast.error('API configuration missing.');
       setLoading(false);
       return;
     }
     
     try {
-      console.log('Trying API URL:', `${apiUrl}/auth/google`);
-      
       const res = await fetch(`${apiUrl}/auth/google`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token: response.credential }),
       });
 
-      console.log('Response status:', res.status);
       const data = await res.json();
-      console.log('Response data:', data);
 
       if (data.success) {
         localStorage.setItem('accessToken', data.data.accessToken);
         localStorage.setItem('refreshToken', data.data.refreshToken);
-        toast.success('Welcome to FocusFlow!');
+        toast.success('Welcome!');
         navigate('/dashboard');
-        window.location.reload();
         return;
-      } else {
-        console.error('Login failed:', data);
-        const errorMsg = data.message || 'Google login failed';
-        toast.error(errorMsg);
       }
+      
+      toast.error(data.message || 'Login failed');
     } catch (error) {
-      console.error('Failed to connect to server:', error);
-      toast.error('Cannot connect to server. Please try again.');
+      toast.error('Connection failed. Try again.');
+    } finally {
+      setLoading(false);
     }
-    
-    setLoading(false);
   };
 
   useEffect(() => {
-    // Initialize Google Sign-In
-    if (window.google) {
+    if (window.google && import.meta.env.VITE_GOOGLE_CLIENT_ID) {
       window.google.accounts.id.initialize({
         client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
         callback: handleCredentialResponse,
       });
-
-      window.google.accounts.id.renderButton(
-        document.getElementById('google-signin-button'),
-        {
-          theme: 'outline',
-          size: 'large',
-          width: 320,
-          text: 'continue_with'
-        }
-      );
     }
   }, []);
 
   return (
     <div className="relative">
       <button
-        onClick={() => {
-          if (window.google) {
-            window.google.accounts.id.prompt();
-          }
-        }}
-        disabled={loading}
-        className="w-full flex items-center justify-center px-4 py-3 border border-gray-300 rounded-xl bg-white hover:bg-gray-50 hover:border-gray-400 hover:shadow-md transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 text-gray-700 font-medium"
+        onClick={() => window.google?.accounts.id.prompt()}
+        disabled={loading || !window.google}
+        className="w-full flex items-center justify-center px-4 py-3 border border-gray-300 rounded-xl bg-white hover:bg-gray-50 transition-colors disabled:opacity-50 text-gray-700 font-medium"
       >
         {loading ? (
           <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-600 mr-3"></div>
@@ -101,9 +73,6 @@ export const GoogleLoginButton = () => {
           {loading ? 'Signing in...' : 'Continue with Google'}
         </span>
       </button>
-      
-      {/* Hidden Google button for functionality */}
-      <div id="google-signin-button" className="hidden"></div>
     </div>
   );
 };
