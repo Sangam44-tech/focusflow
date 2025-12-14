@@ -12,52 +12,41 @@ export const GoogleLoginButton = () => {
     console.log('Google credential response:', response);
     setLoading(true);
     
-    // Try multiple backend URLs
-    const apiUrls = [
-      'https://focusflow-backend.vercel.app/api',
-      'http://localhost:5000/api',
-      import.meta.env.VITE_API_URL
-    ].filter(Boolean);
+    // Use primary API URL
+    const apiUrl = import.meta.env.VITE_API_URL || 'https://focusflow-backend.vercel.app/api';
     
-    for (const apiUrl of apiUrls) {
-      try {
-        console.log('Trying API URL:', `${apiUrl}/auth/google`);
-        
-        const res = await fetch(`${apiUrl}/auth/google`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ token: response.credential }),
-        });
+    try {
+      console.log('Trying API URL:', `${apiUrl}/auth/google`);
+      
+      const res = await fetch(`${apiUrl}/auth/google`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ token: response.credential }),
+      });
 
-        console.log('Response status:', res.status);
-        const data = await res.json();
-        console.log('Response data:', data);
+      console.log('Response status:', res.status);
+      const data = await res.json();
+      console.log('Response data:', data);
 
-        if (data.success) {
-          localStorage.setItem('accessToken', data.data.accessToken);
-          localStorage.setItem('refreshToken', data.data.refreshToken);
-          toast.success('Welcome to FocusFlow!');
-          navigate('/dashboard');
-          window.location.reload();
-          return; // Success, exit the loop
-        } else {
-          console.error('Login failed:', data);
-          const errorMsg = data.message || 'Google login failed';
-          toast.error(errorMsg);
-          return;
-        }
-      } catch (error) {
-        console.error(`Failed to connect to ${apiUrl}:`, error);
-        // Continue to next URL
+      if (data.success) {
+        localStorage.setItem('accessToken', data.data.accessToken);
+        localStorage.setItem('refreshToken', data.data.refreshToken);
+        toast.success('Welcome to FocusFlow!');
+        navigate('/dashboard');
+        window.location.reload();
+        return;
+      } else {
+        console.error('Login failed:', data);
+        const errorMsg = data.message || 'Google login failed';
+        toast.error(errorMsg);
       }
+    } catch (error) {
+      console.error('Failed to connect to server:', error);
+      toast.error('Cannot connect to server. Please try again.');
     }
     
-    // If all URLs failed
-    const errorMsg = 'Cannot connect to server. Please try again.';
-    toast.error(errorMsg);
-    console.error('All backend URLs failed');
     setLoading(false);
   };
 

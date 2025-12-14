@@ -120,14 +120,16 @@ export const googleCallback = asyncHandler(async (req, res) => {
           name,
           password: hashedPassword,
           avatar: picture,
-          googleId
+          provider: 'google',
+          providerId: googleId
         }
       });
-    } else if (!user.googleId) {
+    } else if (!user.providerId) {
       user = await prisma.user.update({
         where: { id: user.id },
         data: { 
-          googleId,
+          providerId: googleId,
+          provider: 'google',
           avatar: picture || user.avatar,
           name: name || user.name
         }
