@@ -343,27 +343,6 @@ export const Profile = () => {
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-gray-600">Goal Completion</span>
                     <span className="font-semibold text-gray-900">
-                      {stats.totalProjects > 0 
-                        ? Math.round((stats.completedProjects / stats.totalProjects) * 100)
-                        : 0}%
-                    </span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div 
-                      className="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full transition-all duration-300"
-                      style={{ 
-                        width: `${stats.totalProjects > 0 
-                          ? Math.round((stats.completedProjects / stats.totalProjects) * 100)
-                          : 0}%` 
-                      }}
-                    ></div>
-                  </div>
-                </div>
-                
-                <div className="pt-4 border-t border-gray-100">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-gray-600">Task Completion</span>
-                    <span className="font-semibold text-gray-900">
                       {stats.completionRate || 0}%
                     </span>
                   </div>
