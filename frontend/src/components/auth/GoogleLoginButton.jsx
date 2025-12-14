@@ -49,6 +49,19 @@ export const GoogleLoginButton = () => {
     }
   };
 
+  const handleFallbackLogin = () => {
+    const params = new URLSearchParams({
+      client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+      redirect_uri: `${window.location.origin}/auth/google/callback`,
+      response_type: 'code',
+      scope: 'openid email profile',
+      access_type: 'offline',
+      prompt: 'select_account'
+    });
+    
+    window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
+  };
+
   useEffect(() => {
     let mounted = true;
     
@@ -114,13 +127,13 @@ export const GoogleLoginButton = () => {
               window.google.accounts.id.prompt();
             } catch (error) {
               console.error('Prompt failed:', error);
-              toast.error('Please try again or refresh the page.');
+              handleFallbackLogin();
             }
           } else {
-            toast.error('Google login not ready. Please wait or refresh.');
+            handleFallbackLogin();
           }
         }}
-        disabled={loading || !googleReady}
+        disabled={loading}
         className="w-full flex items-center justify-center px-4 py-3 border border-gray-300 rounded-xl bg-white hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 font-medium"
       >
         {loading ? (
