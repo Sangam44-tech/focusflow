@@ -39,22 +39,31 @@ export const GoogleLoginButton = () => {
 
   useEffect(() => {
     const initGoogle = () => {
-      if (window.google?.accounts?.id) {
-        window.google.accounts.id.initialize({
-          client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
-          callback: handleCredentialResponse
-        });
-        setGoogleReady(true);
+      if (window.google?.accounts?.id && import.meta.env.VITE_GOOGLE_CLIENT_ID) {
+        try {
+          window.google.accounts.id.initialize({
+            client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+            callback: handleCredentialResponse,
+            use_fedcm_for_prompt: false
+          });
+          setGoogleReady(true);
+        } catch (error) {
+          console.error('Google init failed:', error);
+        }
       }
     };
 
     if (window.google) {
       initGoogle();
     } else {
-      const script = document.createElement('script');
-      script.src = 'https://accounts.google.com/gsi/client';
-      script.onload = initGoogle;
-      document.head.appendChild(script);
+      const checkGoogle = setInterval(() => {
+        if (window.google) {
+          clearInterval(checkGoogle);
+          initGoogle();
+        }
+      }, 100);
+      
+      setTimeout(() => clearInterval(checkGoogle), 3000);
     }
   }, []);
 
