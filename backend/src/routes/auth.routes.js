@@ -1,6 +1,6 @@
 // backend/src/routes/auth.routes.js
 import { Router } from 'express';
-import { register, login, refresh, logout, getMe, changePassword } from '../controllers/auth.controller.js';
+import { register, login, refresh, logout, getMe, changePassword, updateProfile } from '../controllers/auth.controller.js';
 import { googleAuth } from '../controllers/oauth.controller.js';
 import { auth } from '../middlewares/auth.middleware.js';
 import { validate } from '../middlewares/validate.middleware.js';
@@ -15,6 +15,7 @@ router.post('/refresh', refresh);
 router.post('/logout', auth, logout);
 router.get('/me', auth, getMe);
 router.post('/change-password', auth, validate(changePasswordSchema), changePassword);
+router.put('/profile', auth, updateProfile);
 router.post('/google', googleAuth);
 
 export default router;

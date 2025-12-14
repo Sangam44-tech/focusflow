@@ -39,14 +39,23 @@ export const Dashboard = () => {
   const fetchDashboardData = async () => {
     try {
       const [analyticsRes, projectsRes] = await Promise.all([
-        api.get('/analytics'),
+        api.get('/analytics/overview'),
         api.get('/projects')
       ]);
       
       setAnalytics(analyticsRes.data.data);
       setRecentProjects(projectsRes.data.data?.slice(0, 4) || []);
     } catch (error) {
+      console.error('Dashboard data error:', error);
       toast.error('Failed to fetch dashboard data');
+      // Set default values to prevent crashes
+      setAnalytics({
+        activeProjects: 0,
+        completedProjects: 0,
+        totalTasks: 0,
+        completedTasks: 0
+      });
+      setRecentProjects([]);
     } finally {
       setLoading(false);
     }

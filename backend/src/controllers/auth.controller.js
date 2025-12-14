@@ -78,3 +78,14 @@ export const changePassword = asyncHandler(async (req, res) => {
     message: 'Password changed successfully'
   });
 });
+
+export const updateProfile = asyncHandler(async (req, res) => {
+  const { name, email } = req.body;
+  const user = await authService.updateProfile(req.user.id, { name, email });
+  
+  res.json({
+    success: true,
+    message: 'Profile updated successfully',
+    data: { user }
+  });
+});

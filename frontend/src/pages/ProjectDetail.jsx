@@ -5,6 +5,7 @@ import { Button } from '../components/common/Button';
 import { Card, CardBody } from '../components/common/Card';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
 import { ConfirmModal } from '../components/common/ConfirmModal';
+import { CongratulationsModal } from '../components/common/CongratulationsModal';
 import api from '../services/api';
 import toast from 'react-hot-toast';
 
@@ -30,6 +31,11 @@ export const ProjectDetail = () => {
     message: '',
     onConfirm: null,
     variant: 'danger'
+  });
+  const [congratsModal, setCongratsModal] = useState({
+    isOpen: false,
+    projectName: '',
+    completedTasks: 0
   });
 
   useEffect(() => {
@@ -132,6 +138,12 @@ export const ProjectDetail = () => {
       
       if (response.data.success) {
         toast.success('Task status updated!');
+        
+        // Check if this completion triggers congratulations
+        if (newStatus === 'COMPLETED') {
+          checkForCompletion(taskId);
+        }
+        
         await fetchProjectData();
         
         // Trigger analytics refresh
@@ -149,6 +161,27 @@ export const ProjectDetail = () => {
       }
       
       toast.error(error.response?.data?.message || 'Failed to update task status. Check your connection.');
+    }
+  };
+
+  const checkForCompletion = (completedTaskId) => {
+    // Get current task list and simulate the completion
+    const updatedTasks = tasks.map(task => 
+      task.id === completedTaskId ? { ...task, status: 'COMPLETED' } : task
+    );
+    
+    const totalTasks = updatedTasks.length;
+    const completedTasks = updatedTasks.filter(task => task.status === 'COMPLETED').length;
+    
+    // Show congratulations if all tasks are completed and there's at least 1 task
+    if (totalTasks > 0 && completedTasks === totalTasks) {
+      setTimeout(() => {
+        setCongratsModal({
+          isOpen: true,
+          projectName: project.name,
+          completedTasks: totalTasks
+        });
+      }, 500); // Small delay for better UX
     }
   };
 
@@ -787,6 +820,14 @@ export const ProjectDetail = () => {
         variant={confirmModal.variant}
         confirmText="Delete"
         cancelText="Cancel"
+      />
+
+      {/* Congratulations Modal */}
+      <CongratulationsModal
+        isOpen={congratsModal.isOpen}
+        onClose={() => setCongratsModal(prev => ({ ...prev, isOpen: false }))}
+        projectName={congratsModal.projectName}
+        completedTasks={congratsModal.completedTasks}
       />
     </div>
   );

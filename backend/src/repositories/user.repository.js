@@ -54,5 +54,16 @@ export const userRepository = {
       where: { id },
       data: { password: hashedPassword }
     });
+  },
+
+  updateProfile: async (id, data) => {
+    return prisma.user.update({
+      where: { id },
+      data: {
+        name: data.name,
+        email: data.email
+      },
+      include: { subscription: true }
+    });
   }
 };

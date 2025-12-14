@@ -32,25 +32,42 @@ export const Profile = () => {
 
   const fetchStats = async () => {
     try {
-      const [projectsRes] = await Promise.all([
-        api.get('/projects')
+      const [analyticsRes, projectsRes] = await Promise.all([
+        api.get('/analytics/overview').catch(() => ({ data: { data: null } })),
+        api.get('/projects').catch(() => ({ data: { data: [] } }))
       ]);
       
+      const analytics = analyticsRes.data.data;
       const projects = projectsRes.data.data || [];
       
-      // Calculate stats from projects data
-      const totalTasks = projects.reduce((sum, project) => sum + (project._count?.tasks || 0), 0);
-      const activeProjects = projects.filter(p => p.status === 'ACTIVE').length;
-      const completedProjects = projects.filter(p => p.status === 'COMPLETED').length;
-      
-      setStats({
-        totalProjects: projects.length,
-        activeProjects,
-        completedProjects,
-        totalTasks,
-        completedTasks: 0, // Will be calculated from actual task data if needed
-        joinDate: user?.createdAt
-      });
+      if (analytics) {
+        setStats({
+          totalProjects: analytics.totalProjects || 0,
+          activeProjects: analytics.activeProjects || 0,
+          completedProjects: analytics.completedProjects || 0,
+          totalTasks: analytics.totalTasks || 0,
+          completedTasks: analytics.completedTasks || 0,
+          completionRate: analytics.completionRate || 0,
+          currentStreak: analytics.currentStreak || 0,
+          joinDate: user?.createdAt
+        });
+      } else {
+        // Fallback calculation from projects
+        const totalTasks = projects.reduce((sum, project) => sum + (project._count?.tasks || 0), 0);
+        const activeProjects = projects.filter(p => p.status === 'ACTIVE').length;
+        const completedProjects = projects.filter(p => p.status === 'COMPLETED').length;
+        
+        setStats({
+          totalProjects: projects.length,
+          activeProjects,
+          completedProjects,
+          totalTasks,
+          completedTasks: 0,
+          completionRate: 0,
+          currentStreak: 0,
+          joinDate: user?.createdAt
+        });
+      }
     } catch (error) {
       console.error('Failed to fetch stats:', error);
       setStats({
@@ -59,6 +76,8 @@ export const Profile = () => {
         completedProjects: 0,
         totalTasks: 0,
         completedTasks: 0,
+        completionRate: 0,
+        currentStreak: 0,
         joinDate: user?.createdAt
       });
     }
@@ -257,7 +276,14 @@ export const Profile = () => {
         <div className="space-y-6">
           {/* Account Stats */}
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">Your Progress</h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-gray-900">Your Progress</h3>
+              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+              </div>
+            </div>
             
             {stats ? (
               <div className="space-y-4">
@@ -281,14 +307,51 @@ export const Profile = () => {
                   <span className="font-semibold text-gray-900">{stats.totalTasks}</span>
                 </div>
                 
-                <div className="pt-4 border-t border-gray-100">
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-600">Completed Tasks</span>
+                  <span className="font-semibold text-emerald-600">{stats.completedTasks}</span>
+                </div>
+                
+                {stats.currentStreak > 0 && (
                   <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Current Streak</span>
+                    <span className="font-semibold text-orange-600">{stats.currentStreak} days 🔥</span>
+                  </div>
+                )}
+                
+                <div className="pt-4 border-t border-gray-100">
+                  <div className="flex items-center justify-between mb-2">
                     <span className="text-gray-600">Goal Completion</span>
                     <span className="font-semibold text-gray-900">
                       {stats.totalProjects > 0 
                         ? Math.round((stats.completedProjects / stats.totalProjects) * 100)
                         : 0}%
                     </span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div 
+                      className="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full transition-all duration-300"
+                      style={{ 
+                        width: `${stats.totalProjects > 0 
+                          ? Math.round((stats.completedProjects / stats.totalProjects) * 100)
+                          : 0}%` 
+                      }}
+                    ></div>
+                  </div>
+                </div>
+                
+                <div className="pt-4 border-t border-gray-100">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-gray-600">Task Completion</span>
+                    <span className="font-semibold text-gray-900">
+                      {stats.completionRate || 0}%
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div 
+                      className="bg-gradient-to-r from-emerald-500 to-teal-600 h-2 rounded-full transition-all duration-300"
+                      style={{ width: `${stats.completionRate || 0}%` }}
+                    ></div>
                   </div>
                 </div>
                 

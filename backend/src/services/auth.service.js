@@ -126,5 +126,30 @@ export const authService = {
     // Update password and increment token version
     await userRepository.updatePassword(userId, hashedNewPassword);
     await userRepository.incrementTokenVersion(userId);
+  },
+
+  updateProfile: async (userId, data) => {
+    const user = await userRepository.findById(userId);
+    if (!user) {
+      throw new ApiError(404, 'User not found');
+    }
+
+    // Check if email is being changed and if it's already taken
+    if (data.email && data.email !== user.email) {
+      const existingUser = await userRepository.findByEmail(data.email);
+      if (existingUser) {
+        throw new ApiError(400, 'Email already in use');
+      }
+    }
+
+    // Update user profile
+    const updatedUser = await userRepository.updateProfile(userId, data);
+    
+    return {
+      id: updatedUser.id,
+      email: updatedUser.email,
+      name: updatedUser.name,
+      subscription: updatedUser.subscription
+    };
   }
 };
