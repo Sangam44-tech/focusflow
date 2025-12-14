@@ -44,19 +44,47 @@ export const GoogleLoginButton = () => {
   };
 
   useEffect(() => {
-    if (window.google && import.meta.env.VITE_GOOGLE_CLIENT_ID) {
-      window.google.accounts.id.initialize({
-        client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
-        callback: handleCredentialResponse,
-      });
+    const initializeGoogle = () => {
+      if (window.google?.accounts?.id && import.meta.env.VITE_GOOGLE_CLIENT_ID) {
+        try {
+          window.google.accounts.id.initialize({
+            client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+            callback: handleCredentialResponse,
+            auto_select: false,
+            cancel_on_tap_outside: true
+          });
+        } catch (error) {
+          console.error('Google initialization failed:', error);
+          toast.error('Google login unavailable');
+        }
+      }
+    };
+
+    if (window.google) {
+      initializeGoogle();
+    } else {
+      const checkGoogle = setInterval(() => {
+        if (window.google) {
+          clearInterval(checkGoogle);
+          initializeGoogle();
+        }
+      }, 100);
+      
+      setTimeout(() => clearInterval(checkGoogle), 5000);
     }
   }, []);
 
   return (
     <div className="relative">
       <button
-        onClick={() => window.google?.accounts.id.prompt()}
-        disabled={loading || !window.google}
+        onClick={() => {
+          if (window.google?.accounts?.id) {
+            window.google.accounts.id.prompt();
+          } else {
+            toast.error('Google login not available. Please refresh the page.');
+          }
+        }}
+        disabled={loading || !window.google?.accounts?.id}
         className="w-full flex items-center justify-center px-4 py-3 border border-gray-300 rounded-xl bg-white hover:bg-gray-50 transition-colors disabled:opacity-50 text-gray-700 font-medium"
       >
         {loading ? (
