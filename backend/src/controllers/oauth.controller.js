@@ -1,94 +1,103 @@
 // backend/src/controllers/oauth.controller.js
-import { asyncHandler } from '../utils/asyncHandler.js';
-import prisma from '../config/database.js';
+import { OAuth2Client } from 'google-auth-library';
 import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
+import prisma from '../config/database.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
+import { ApiError } from '../utils/ApiError.js';
+
+const client = new OAuth2Client(
+  process.env.GOOGLE_CLIENT_ID,
+  process.env.GOOGLE_CLIENT_SECRET,
+  process.env.GOOGLE_REDIRECT_URI
+);
 
 export const googleAuth = asyncHandler(async (req, res) => {
-  console.log('Google OAuth request received:', req.body);
+  const authUrl = client.generateAuthUrl({
+    access_type: 'offline',
+    scope: ['profile', 'email'],
+    state: JSON.stringify({ returnTo: req.query.returnTo || '/dashboard' })
+  });
+
+  res.redirect(authUrl);
+});
+
+export const googleCallback = asyncHandler(async (req, res) => {
+  const { code, state } = req.query;
   
-  const { token } = req.body;
-  
-  if (!token) {
-    return res.status(400).json({
-      success: false,
-      message: 'No token provided'
-    });
+  if (!code) {
+    throw new ApiError(400, 'Authorization code is required');
   }
-  
+
   try {
-    // Decode JWT token directly (Google Identity Services sends JWT)
-    const base64Url = token.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-    }).join(''));
-    
-    const googleUser = JSON.parse(jsonPayload);
-    console.log('Decoded Google user:', googleUser);
-    
-    if (!googleUser.email) {
-      return res.status(400).json({
-        success: false,
-        message: 'No email in Google token'
-      });
-    }
-    
-    // Check if user exists
-    let user = await prisma.user.findUnique({
-      where: { email: googleUser.email }
+    const { tokens } = await client.getToken(code);
+    client.setCredentials(tokens);
+
+    const ticket = await client.verifyIdToken({
+      idToken: tokens.id_token,
+      audience: process.env.GOOGLE_CLIENT_ID,
     });
-    
-    // Create user if doesn't exist
+
+    const payload = ticket.getPayload();
+    const { sub: googleId, email, name, picture } = payload;
+
+    let user = await prisma.user.findUnique({
+      where: { email }
+    });
+
     if (!user) {
-      console.log('Creating new user for:', googleUser.email);
+      const hashedPassword = await bcrypt.hash(googleId, 10);
       user = await prisma.user.create({
         data: {
-          name: googleUser.name,
-          email: googleUser.email,
-          avatar: googleUser.picture,
-          provider: 'google',
-          providerId: googleUser.sub
+          email,
+          name,
+          password: hashedPassword,
+          avatar: picture,
+          googleId
+        }
+      });
+    } else if (!user.googleId) {
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: { 
+          googleId,
+          avatar: picture || user.avatar,
+          name: name || user.name
         }
       });
     }
-    
-    console.log('User found/created:', user.id);
-    
-    // Generate tokens
+
     const accessToken = jwt.sign(
       { userId: user.id },
-      process.env.ACCESS_TOKEN_SECRET || process.env.JWT_SECRET,
-      { expiresIn: '1h' }
+      process.env.ACCESS_TOKEN_SECRET,
+      { expiresIn: '15m' }
     );
-    
+
     const refreshToken = jwt.sign(
-      { userId: user.id },
-      process.env.REFRESH_TOKEN_SECRET || process.env.JWT_REFRESH_SECRET,
+      { userId: user.id, tokenVersion: user.tokenVersion },
+      process.env.REFRESH_TOKEN_SECRET,
       { expiresIn: '7d' }
     );
-    
-    console.log('Tokens generated successfully');
-    
-    res.json({
-      success: true,
-      data: {
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          avatar: user.avatar
-        },
-        accessToken,
-        refreshToken
-      }
+
+    res.cookie('accessToken', accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 15 * 60 * 1000
     });
-    
+
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000
+    });
+
+    const returnTo = state ? JSON.parse(state).returnTo : '/dashboard';
+    res.redirect(`${process.env.FRONTEND_URL}${returnTo}?auth=success`);
+
   } catch (error) {
     console.error('Google OAuth error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Google authentication failed',
-      error: error.message
-    });
+    res.redirect(`${process.env.FRONTEND_URL}/login?error=oauth_failed`);
   }
 });
