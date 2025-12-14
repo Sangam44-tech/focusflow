@@ -6,20 +6,14 @@ import toast from 'react-hot-toast';
 
 export const GoogleLoginButton = () => {
   const [loading, setLoading] = useState(false);
+  const [googleReady, setGoogleReady] = useState(false);
   const navigate = useNavigate();
 
   const handleCredentialResponse = async (response) => {
     setLoading(true);
     
-    const apiUrl = import.meta.env.VITE_API_URL;
-    if (!apiUrl) {
-      toast.error('API configuration missing.');
-      setLoading(false);
-      return;
-    }
-    
     try {
-      const res = await fetch(`${apiUrl}/auth/google`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/auth/google`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token: response.credential }),
@@ -44,33 +38,23 @@ export const GoogleLoginButton = () => {
   };
 
   useEffect(() => {
-    const initializeGoogle = () => {
-      if (window.google?.accounts?.id && import.meta.env.VITE_GOOGLE_CLIENT_ID) {
-        try {
-          window.google.accounts.id.initialize({
-            client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
-            callback: handleCredentialResponse,
-            auto_select: false,
-            cancel_on_tap_outside: true
-          });
-        } catch (error) {
-          console.error('Google initialization failed:', error);
-          toast.error('Google login unavailable');
-        }
+    const initGoogle = () => {
+      if (window.google?.accounts?.id) {
+        window.google.accounts.id.initialize({
+          client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+          callback: handleCredentialResponse
+        });
+        setGoogleReady(true);
       }
     };
 
     if (window.google) {
-      initializeGoogle();
+      initGoogle();
     } else {
-      const checkGoogle = setInterval(() => {
-        if (window.google) {
-          clearInterval(checkGoogle);
-          initializeGoogle();
-        }
-      }, 100);
-      
-      setTimeout(() => clearInterval(checkGoogle), 5000);
+      const script = document.createElement('script');
+      script.src = 'https://accounts.google.com/gsi/client';
+      script.onload = initGoogle;
+      document.head.appendChild(script);
     }
   }, []);
 
@@ -78,13 +62,13 @@ export const GoogleLoginButton = () => {
     <div className="relative">
       <button
         onClick={() => {
-          if (window.google?.accounts?.id) {
+          if (googleReady && window.google?.accounts?.id) {
             window.google.accounts.id.prompt();
           } else {
-            toast.error('Google login not available. Please refresh the page.');
+            toast.error('Google login not ready. Please wait.');
           }
         }}
-        disabled={loading || !window.google?.accounts?.id}
+        disabled={loading || !googleReady}
         className="w-full flex items-center justify-center px-4 py-3 border border-gray-300 rounded-xl bg-white hover:bg-gray-50 transition-colors disabled:opacity-50 text-gray-700 font-medium"
       >
         {loading ? (
