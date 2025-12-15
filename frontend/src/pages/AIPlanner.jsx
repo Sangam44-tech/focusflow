@@ -143,7 +143,7 @@ export const AIPlanner = () => {
                   {plan.imported && (
                     <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
                       <p className="text-green-700 text-xs sm:text-sm font-medium">
-                        ✅ This plan has been imported as a project
+                        ✅ This plan has been imported as a goal.
                       </p>
                     </div>
                   )}
