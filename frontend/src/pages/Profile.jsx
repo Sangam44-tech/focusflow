@@ -98,19 +98,36 @@ export const Profile = () => {
 
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
+    
+    // Basic validation
+    if (!formData.name || formData.name.trim().length < 2) {
+      toast.error('Name must be at least 2 characters long');
+      return;
+    }
+    
+    if (!formData.email || !formData.email.includes('@')) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
+    
     setLoading(true);
 
     try {
       const updateData = {
-        name: formData.name,
-        email: formData.email
+        name: formData.name.trim(),
+        email: formData.email.trim().toLowerCase()
       };
 
       const response = await api.put('/auth/profile', updateData);
-      updateUser(response.data.data);
+      const userData = response.data?.data?.user || response.data?.data;
+      updateUser(userData);
       toast.success('Profile updated successfully!');
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to update profile');
+      console.error('Profile update error:', error);
+      const errorMessage = error.response?.data?.message || 
+                          error.message || 
+                          'Failed to update profile';
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
