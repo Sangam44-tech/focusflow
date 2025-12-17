@@ -115,6 +115,14 @@ export const Profile = () => {
       console.log('🔗 API Base URL:', api.defaults.baseURL);
       console.log('🔑 Token exists:', !!localStorage.getItem('accessToken'));
       
+      // Test basic route first
+      try {
+        const testResponse = await api.put('/auth/profile-test', {});
+        console.log('✅ Test route works:', testResponse.data);
+      } catch (testError) {
+        console.log('❌ Test route failed:', testError.response?.status, testError.message);
+      }
+      
       const response = await api.put('/auth/profile', updateData);
       
       console.log('✅ Update successful:', response.data);
