@@ -57,13 +57,12 @@ export const userRepository = {
   },
 
   updateProfile: async (id, data) => {
-    const updateData = {};
-    if (data.name !== undefined) updateData.name = data.name;
-    if (data.email !== undefined) updateData.email = data.email;
-    
     return prisma.user.update({
       where: { id },
-      data: updateData,
+      data: {
+        name: data.name
+        // Email is NOT included - cannot be changed
+      },
       include: { subscription: true }
     });
   }

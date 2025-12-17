@@ -134,16 +134,13 @@ export const authService = {
       throw new ApiError(404, 'User not found');
     }
 
-    // Check if email is being changed and if it's already taken
-    if (data.email && data.email !== user.email) {
-      const existingUser = await userRepository.findByEmail(data.email);
-      if (existingUser) {
-        throw new ApiError(400, 'Email already in use');
-      }
-    }
+    // Only allow name updates - ignore email even if sent
+    const updateData = {
+      name: data.name
+    };
 
     // Update user profile
-    const updatedUser = await userRepository.updateProfile(userId, data);
+    const updatedUser = await userRepository.updateProfile(userId, updateData);
     
     return {
       id: updatedUser.id,

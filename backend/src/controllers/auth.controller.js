@@ -71,6 +71,22 @@ export const getMe = asyncHandler(async (req, res) => {
 
 export const changePassword = asyncHandler(async (req, res) => {
   const { currentPassword, newPassword } = req.body;
+  
+  // Validate inputs
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({
+      success: false,
+      message: 'Both current and new passwords are required'
+    });
+  }
+
+  if (newPassword.length < 8) {
+    return res.status(400).json({
+      success: false,
+      message: 'New password must be at least 8 characters long'
+    });
+  }
+
   await authService.changePassword(req.user.id, currentPassword, newPassword);
   
   res.json({
@@ -80,12 +96,21 @@ export const changePassword = asyncHandler(async (req, res) => {
 });
 
 export const updateProfile = asyncHandler(async (req, res) => {
-  const { name, email } = req.body;
-  const user = await authService.updateProfile(req.user.id, { name, email });
+  const { name } = req.body;
+  
+  // Validate name
+  if (!name || !name.trim()) {
+    return res.status(400).json({
+      success: false,
+      message: 'Name is required'
+    });
+  }
+
+  const updatedUser = await authService.updateProfile(req.user.id, { name: name.trim() });
   
   res.json({
     success: true,
     message: 'Profile updated successfully',
-    data: { user }
+    data: updatedUser
   });
 });
