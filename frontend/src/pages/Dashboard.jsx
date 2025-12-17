@@ -1,65 +1,27 @@
 // frontend/src/pages/Dashboard.jsx
-import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import api from '../services/api';
+import { useProjects } from '../hooks/useProjects';
+import { useAnalytics } from '../hooks/useAnalytics';
 import toast from 'react-hot-toast';
 
 export const Dashboard = () => {
   const { user } = useAuth();
-  const [analytics, setAnalytics] = useState(null);
-  const [recentProjects, setRecentProjects] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
-
-  // Refresh data when component becomes visible (user navigates back)
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        fetchDashboardData();
-      }
-    };
-    
-    const handleAnalyticsRefresh = () => {
-      fetchDashboardData();
-    };
-    
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('analyticsRefresh', handleAnalyticsRefresh);
-    
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('analyticsRefresh', handleAnalyticsRefresh);
-    };
-  }, []);
-
-  const fetchDashboardData = async () => {
-    try {
-      const [analyticsRes, projectsRes] = await Promise.all([
-        api.get('/analytics/overview'),
-        api.get('/projects')
-      ]);
-      
-      console.log('Dashboard Analytics Data:', analyticsRes.data.data);
-      setAnalytics(analyticsRes.data.data);
-      setRecentProjects(projectsRes.data.data?.slice(0, 4) || []);
-    } catch (error) {
-      console.error('Dashboard data error:', error);
-      toast.error('Failed to fetch dashboard data');
-      // Set default values to prevent crashes
-      setAnalytics({
-        activeProjects: 0,
-        completedProjects: 0,
-        totalTasks: 0,
-        completedTasks: 0
-      });
-      setRecentProjects([]);
-    } finally {
-      setLoading(false);
-    }
+  
+  // Use React Query hooks - data is cached & shared across components
+  const { data: projects = [], isLoading: loadingProjects } = useProjects();
+  const { data: analytics, isLoading: loadingAnalytics } = useAnalytics();
+  
+  const recentProjects = projects.slice(0, 4);
+  const loading = loadingProjects || loadingAnalytics;
+  
+  // Provide default analytics if not loaded yet
+  const safeAnalytics = analytics || {
+    activeProjects: 0,
+    completedProjects: 0,
+    totalTasks: 0,
+    completedTasks: 0,
+    completionRate: 0
   };
 
   const getGreeting = () => {
@@ -142,7 +104,7 @@ export const Dashboard = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs lg:text-sm font-medium text-gray-600">Active Goals</p>
-              <p className="text-2xl lg:text-3xl font-bold text-blue-600">{analytics?.activeProjects || 0}</p>
+              <p className="text-2xl lg:text-3xl font-bold text-blue-600">{safeAnalytics.activeProjects}</p>
             </div>
             <div className="w-10 h-10 lg:w-12 lg:h-12 bg-blue-100 rounded-lg lg:rounded-xl flex items-center justify-center flex-shrink-0">
               <svg className="w-5 h-5 lg:w-6 lg:h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -156,7 +118,7 @@ export const Dashboard = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs lg:text-sm font-medium text-gray-600">Completed Goals</p>
-              <p className="text-2xl lg:text-3xl font-bold text-emerald-600">{analytics?.completedProjects || 0}</p>
+              <p className="text-2xl lg:text-3xl font-bold text-emerald-600">{safeAnalytics.completedProjects}</p>
             </div>
             <div className="w-10 h-10 lg:w-12 lg:h-12 bg-green-100 rounded-lg lg:rounded-xl flex items-center justify-center flex-shrink-0">
               <svg className="w-5 h-5 lg:w-6 lg:h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -170,7 +132,7 @@ export const Dashboard = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs lg:text-sm font-medium text-gray-600">Total Tasks</p>
-              <p className="text-2xl lg:text-3xl font-bold text-purple-600">{analytics?.totalTasks || 0}</p>
+              <p className="text-2xl lg:text-3xl font-bold text-purple-600">{safeAnalytics.totalTasks}</p>
             </div>
             <div className="w-10 h-10 lg:w-12 lg:h-12 bg-purple-100 rounded-lg lg:rounded-xl flex items-center justify-center flex-shrink-0">
               <svg className="w-5 h-5 lg:w-6 lg:h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -185,7 +147,7 @@ export const Dashboard = () => {
             <div>
               <p className="text-xs lg:text-sm font-medium text-gray-600">Completion Rate</p>
               <p className="text-2xl lg:text-3xl font-bold text-orange-600">
-                {analytics?.completionRate || 0}%
+                {safeAnalytics.completionRate}%
               </p>
             </div>
             <div className="w-10 h-10 lg:w-12 lg:h-12 bg-orange-100 rounded-lg lg:rounded-xl flex items-center justify-center flex-shrink-0">
